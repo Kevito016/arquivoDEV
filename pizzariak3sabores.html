@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pizzaria — Cardápio & Pedido para Delivery</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    :root{
+      --accent:#d9534f;
+      --muted:#6b6b6b;
+      --bg:#fafafa;
+      --card:#ffffff;
+      --glass: rgba(0,0,0,0.04);
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, Arial, Helvetica, sans-serif; margin:0; background:var(--bg); color:#222}
+    .container{max-width:1100px; margin:22px auto; padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{margin:0;font-size:26px}
+    .help{color:var(--muted); font-size:14px}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(30,30,30,0.06);margin-top:16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .category{margin-bottom:14px}
+    .category h2{margin:6px 0 12px;font-size:18px;color:#222;border-bottom:1px solid #f0f0f0;padding-bottom:8px}
+    .item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;border:1px solid #f0f0f0;background:#fff;margin-bottom:8px}
+    .item .left{display:flex;flex-direction:column}
+    .item h3{margin:0;font-size:15px}
+    .price{color:var(--muted);font-size:14px}
+    .controls{display:flex;align-items:center;gap:8px}
+    .controls button{width:34px;height:28px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer;font-weight:700}
+    .controls span{min-width:22px;text-align:center;display:inline-block}
+    /* Carrinho */
+    .cart{margin-top:12px;padding:12px;border-radius:8px;background:linear-gradient(180deg, #fff, #fcfcfc);border:1px solid #eee}
+    .cart ul{list-style:none;padding:0;margin:0}
+    .cart li{padding:6px 0;border-bottom:1px dashed #f0f0f0;font-size:15px}
+    .cart .muted{color:var(--muted);font-size:14px}
+    form label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input, textarea, select{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;background:#fff}
+    textarea{min-height:90px;resize:vertical}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button.primary{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid #ddd;padding:9px 12px;border-radius:10px;cursor:pointer}
+    footer{margin-top:18px;text-align:center;color:#999;font-size:13px}
+    .row{display:flex;gap:10px}
+    @media (max-width:680px){ .row{flex-direction:column} .grid{gap:18px} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="logoname">PIZZARIAK3SABORES</h2>
+    <header>
+      <h1>Cardápio</h1>
+      <div class="help">Pizzaria K3 • Delivery</div>
+    </header>
+
+    <section class="card">
+      <div class="grid">
+        <div>
+          <!-- LEFT COLUMN: CATEGORIAS -->
+          <div id="categories-root">
+            <!-- categorias renderizadas por JS -->
+          </div>
+        </div>
+
+        <div>
+          <!-- CARRINHO + RESUMO -->
+          <div class="card cart">
+            <h3>🛒 Seu Carrinho</h3>
+            <ul id="cartList"><li class="muted">Nenhum item no carrinho</li></ul>
+            <p class="muted" id="cartNote">Clique no <strong>+</strong> nos itens para adicionar.</p>
+            <hr style="margin:10px 0;border:none;border-top:1px solid #f4f4f4" />
+            <div class="muted" style="font-size:14px">Resumo (texto que será enviado):</div>
+            <textarea id="pedidoPreview" readonly style="margin-top:8px;min-height:140px"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <h2 style="text-align:center;margin-top:18px;color:var(--muted)">Pedido para Delivery 🍕</h2>
+
+    <section class="card" style="margin-bottom:20px">
+      <form id="form-pedido">
+        <div class="row">
+          <div style="flex:1">
+            <label for="nome">Nome</label>
+            <input id="nome" name="nome" type="text" placeholder="Seu nome" required />
+          </div>
+          <div style="width:220px">
+            <label for="telefone">Telefone</label>
+            <input id="telefone" name="telefone" type="tel" placeholder="85 9xxxx-xxxx" required />
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <label for="observacao">Observação</label>
+          <input id="observacao" name="observacao" type="text" placeholder="Sem picles, sem cebola..." />
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div style="flex:1">
+            <label for="cep">CEP</label>
+            <input id="cep" name="cep" type="text" placeholder="99888-777" />
+          </div>
+          <div style="flex:2">
+            <label for="rua">Rua</label>
+            <input id="rua" name="rua" type="text" placeholder="Avenida 123" />
+          </div>
+          <div style="width:120px">
+            <label for="numero">Número</label>
+            <input id="numero" name="numero" type="text" placeholder="9988" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div style="flex:1">
+            <label for="bairro">Bairro</label>
+            <input id="bairro" name="bairro" type="text" placeholder="Parque Santa Maria" />
+          </div>
+          <div style="width:220px">
+            <label for="referencia">Referência</label>
+            <input id="referencia" name="referencia" type="text" placeholder="" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;align-items:flex-end">
+          <div style="flex:1">
+            <label for="pagamento">Pagamento</label>
+            <select id="pagamento" name="pagamento">
+              <option>Dinheiro</option>
+              <option>PIX</option>
+              <option>Cartão na entrega</option>
+            </select>
+          </div>
+          <div style="width:160px">
+            <label for="troco">Troco</label>
+            <input id="troco" name="troco" type="text" placeholder="59" />
+          </div>
+          <div style="width:260px">
+            <div style="visibility:hidden">_</div>
+            <div class="actions">
+              <button type="submit" class="primary">Confirmar Pedido (WhatsApp)</button>
+              <button type="button" id="waFallback" class="ghost">Abrir WhatsApp (manual)</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <footer>Site estático — criarei backend/API se você quiser automação via SendPulse.</footer>
+  </div>
+
+  <script>
+    // ====== CONFIGURAÇÕES ======
+    // Número da pizzaria que receberá a mensagem (E.164)
+    const PIZZARIA_PHONE = "+558592321310"; // substitua se precisar
+
+    // ====== CARDÁPIO (organizado conforme sua lista) ======
+    // Cada categoria: { title: 'Nome', items: [ {name, priceText} ] }
+    const menuData = [
+      {
+        title: "Pizzas salgadas",
+        items: [
+          { name: "Pizza de mussarela", priceText: "R$ 34,00" },
+          { name: "Pizza de lombo", priceText: "R$ 34,00" },
+          { name: "Pizza de Frango", priceText: "R$ 34,00" },
+          { name: "Pizza Mista", priceText: "R$ 34,00" },
+          { name: "Pizza Portuguesa", priceText: "R$ 34,00" },
+          { name: "Pizza de Queijo Coalho", priceText: "R$ 34,00" },
+          { name: "Pizza Bolonhesa", priceText: "R$ 34,00" },
+          { name: "Pizza Dois Queijos", priceText: "R$ 38,00" },
+          { name: "Pizza Três Queijos", priceText: "R$ 38,00" },
+          { name: "Pizza Veneza", priceText: "R$ 46,00" },
+          { name: "Pizza La México", priceText: "R$ 49,99" },
+          { name: "Pizza Frango Crispy", priceText: "R$ 49,99" },
+          { name: "Pizza Pepperoni Cheese", priceText: "R$ 48,00" },
+          { name: "Pizza Carne do Sol Premium", priceText: "R$ 48,00" },
+          { name: "Pizza Salmão cheese", priceText: "R$ 56,00" },
+          { name: "Pizza Delicinha", priceText: "R$ 46,00" },
+          { name: "Pizza surpresinha", priceText: "R$ 55,00" },
+          { name: "Pizza Camarão cheese", priceText: "R$ 55,00" },
+          { name: "Pizza Fritas Cheddar", priceText: "R$ 55,00" },
+          { name: "Pizza Frango Catupiry", priceText: "R$ 45,00" },
+          { name: "Pizza Quatro Queijos", priceText: "R$ 45,00" },
+          { name: "Pizza Sertaneja", priceText: "R$ 45,00" },
+          { name: "Pizza Buscapé", priceText: "R$ 55,00" },
+          { name: "Pizza Canadense Hot", priceText: "R$ 45,00" },
+          { name: "Pizza Peito de Peru", priceText: "R$ 45,00" },
+          { name: "Pizza Pepperoni", priceText: "R$ 45,00" },
+          { name: "Pizza Faroeste", priceText: "R$ 48,00" },
+          { name: "Pizza Costelinha", priceText: "R$ 55,00" }
+        ]
+      },
+      {
+        title: "Pizzas Doces",
+        items: [
+          { name: "Pizza de Chocolate", priceText: "R$ 39,99" }
+        ]
+      },
+      {
+        title: "Minipizzas salgadas 20cm",
+        items: [
+          { name: "Minipizza de mussarela", priceText: "R$ 15,00" },
+          { name: "Minipizza de lombo", priceText: "R$ 15,00" },
+          { name: "Minipizza de Frango", priceText: "R$ 15,00" },
+          { name: "Minipizza Mista", priceText: "R$ 15,00" },
+          { name: "Minipizza Portuguesa", priceText: "R$ 15,00" },
+          { name: "Minipizza Queijo Coalho", priceText: "R$ 15,00" },
+          { name: "Minipizza Bolonhesa", priceText: "R$ 15,00" },
+          { name: "Minipizza Dois Queijos", priceText: "R$ 15,00" },
+          { name: "Minipizza Três Queijos", priceText: "R$ 15,00" },
+          { name: "Minipizza Veneza", priceText: "R$ 22,00" },
+          { name: "Minipizza La México", priceText: "R$ 24,00" },
+          { name: "Minipizza Frango Crispy", priceText: "R$ 24,00" },
+          { name: "Minipizza Pepperoni Cheese", priceText: "R$ 22,00" },
+          { name: "Minipizza Carne do Sol Premium", priceText: "R$ 23,00" },
+          { name: "Minipizza Salmão cheese", priceText: "R$ 23,00" },
+          { name: "Minipizza Delicinha", priceText: "R$ 22,00" },
+          { name: "Minipizza surpresinha", priceText: "R$ 55,00" },
+          { name: "Minipizza Camarão cheese", priceText: "R$ 25,00" },
+          { name: "Minipizza Fritas Cheddar", priceText: "R$ 25,00" },
+          { name: "Minipizza Frango Catupiry", priceText: "R$ 20,00" },
+          { name: "Minipizza Quatro Queijos", priceText: "R$ 20,00" },
+          { name: "Minipizza Sertaneja", priceText: "R$ 20,00" },
+          { name: "Minipizza Buscapé", priceText: "R$ 25,00" },
+          { name: "Minipizza Canadense Hot", priceText: "R$ 20,00" },
+          { name: "Minipizza Peito de Peru", priceText: "R$ 20,00" },
+          { name: "Minipizza Pepperoni", priceText: "R$ 20,00" },
+          { name: "Minipizza Faroeste", priceText: "R$ 20,00" },
+          { name: "Minipizza Costelinha", priceText: "R$ 25,00" }
+        ]
+      },
+      {
+        title: "Minpizzas Doces",
+        items: [
+          { name: "Minipizza de Chocolate", priceText: "R$ 18,00" },
+          { name: "Minipizza prestígio", priceText: "R$ 20,00" },
+          { name: "Minipizza Chocolate C/Morango", priceText: "R$ 20,00" },
+          { name: "Minipizza Ninho C/Nutella", priceText: "R$ 20,00" },
+          { name: "Minipizza KitKat", priceText: "R$ 20,00" },
+          { name: "Minipizza Bananinha", priceText: "R$ 23,00" },
+          { name: "Minipizza Romeu e Julieta", priceText: "R$ 23,00" },
+          { name: "Minipizza Baton Garoto", priceText: "R$ 23,00" },
+          { name: "Minipizza Casadinha", priceText: "R$ 25,00" },
+          { name: "Minipizza M'Ms", priceText: "R$ 25,00" }
+        ]
+      },
+      {
+        title: "Bordas",
+        items: [
+          { name: "Borda de CHOCOLATE", priceText: "R$ 5,00" },
+          { name: "Borda de CHEDDAR", priceText: "R$ 5,00" },
+          { name: "Borda de REQUEIJÃO", priceText: "R$ 5,00" },
+          { name: "Borda de BRIGADEIRO", priceText: "R$ 6,00" },
+          { name: "Borda de CATUPIRY", priceText: "R$ 6,00" },
+          { name: "Borda de CREAM CHEESE", priceText: "R$ 6,00" },
+          { name: "Borda de NUTELLA", priceText: "R$ 6,00" },
+          { name: "Borda de DOCE DE LEITE", priceText: "R$ 6,00" }
+        ]
+      },
+      {
+        title: "Adicionais",
+        items: [
+          { name: "MILHO VERDE", priceText: "R$ 2,00" },
+          { name: "MANJERICÃO", priceText: "R$ 2,00" },
+          { name: "TOMATE", priceText: "R$ 3,00" },
+          { name: "PIMENTA BIQUINHO", priceText: "R$ 3,00" },
+          { name: "CEBOLA", priceText: "R$ 3,00" },
+          { name: "PALMITO", priceText: "R$ 4,00" },
+          { name: "CHEDDAR (adicional)", priceText: "R$ 5,00" },
+          { name: "REQUEIJÃO (adicional)", priceText: "R$ 6,00" },
+          { name: "ONION RINGS", priceText: "R$ 6,00" },
+          { name: "CREAM CHEESE (adicional)", priceText: "R$ 7,00" },
+          { name: "BACON", priceText: "R$ 6,00" },
+          { name: "CEBOLA CRISPY", priceText: "R$ 4,00" }
+        ]
+      },
+      {
+        title: "Pastéis",
+        items: [
+          { name: "PASTEL DE QUEIJO", priceText: "R$ 8,00" },
+          { name: "PASTEL DE CARNE", priceText: "R$ 8,00" },
+          { name: "PASTEL DE MISTO", priceText: "R$ 8,00" },
+          { name: "PASTEL DE FRANGO", priceText: "R$ 8,00" },
+          { name: "PASTEL DE PIZZA", priceText: "R$ 8,00" },
+          { name: "PASTEL DE CALABRESA", priceText: "R$ 8,00" },
+          { name: "PASTEL DE MISTÃO", priceText: "R$ 12,00" },
+          { name: "PASTEL DE SERTANEJO", priceText: "R$ 12,00" },
+          { name: "PASTEL DE TRÊS QUEIJOS", priceText: "R$ 12,00" },
+          { name: "PASTEL DE FELICIDADE", priceText: "R$ 12,00" },
+          { name: "PASTEL DE FRANGO C/CATUPIRY", priceText: "R$ 12,00" },
+          { name: "PASTEL A MODA", priceText: "R$ 12,00" },
+          { name: "PASTEL A MODA DA GALERA", priceText: "R$ 15,00" },
+          { name: "PASTEL DE CHOCOLATE", priceText: "R$ 10,00" },
+          { name: "PASTEL DE DOCE DE LEITE", priceText: "R$ 10,00" }
+        ]
+      },
+      {
+        title: "Refrigerantes",
+        items: [
+          { name: "PEPSI 1L", priceText: "R$ 10,00" },
+          { name: "COCA-COLA ZERO 1L", priceText: "R$ 10,00" },
+          { name: "COCA-COLA 1L PET", priceText: "R$ 10,00" },
+          { name: "SÃO GERALDO 1L", priceText: "R$ 10,00" },
+          { name: "GUARANÁ 1L", priceText: "R$ 10,00" },
+          { name: "REFRI-LATA FANTA-UVA 350ML", priceText: "R$ 5,00" },
+          { name: "REFRI-LATA FANTA-LARANJA 350ML", priceText: "R$ 5,00" },
+          { name: "REFRI-LATA SPRITE 350ML", priceText: "R$ 5,00" },
+          { name: "REFRI-LATA COCA-COLA ZERO 350ML", priceText: "R$ 5,00" },
+          { name: "REFRI-LATA COCA-COLA 350ML", priceText: "R$ 5,00" },
+          { name: "REFRI-LATA SÃO GERALDO 350ML", priceText: "R$ 5,00" }
+        ]
+      }
+    ];
+
+    // ====== ESTADO DO CARRINHO ======
+    const cart = {}; // chave: itemText, valor: { qty, priceText }
+    const categoriesRoot = document.getElementById('categories-root');
+    const cartList = document.getElementById('cartList');
+    const pedidoPreview = document.getElementById('pedidoPreview');
+
+    // Renderiza categorias e itens
+    function renderMenu() {
+      categoriesRoot.innerHTML = "";
+      menuData.forEach(cat => {
+        const catWrap = document.createElement('div');
+        catWrap.className = 'category';
+        const h = document.createElement('h2');
+        h.textContent = cat.title;
+        catWrap.appendChild(h);
+
+        cat.items.forEach(item => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'item';
+          const left = document.createElement('div');
+          left.className = 'left';
+          const title = document.createElement('h3');
+          title.textContent = item.name;
+          const price = document.createElement('div');
+          price.className = 'price';
+          price.textContent = item.priceText;
+          left.appendChild(title);
+          left.appendChild(price);
+
+          const controls = document.createElement('div');
+          controls.className = 'controls';
+          const btnMinus = document.createElement('button');
+          btnMinus.type = 'button';
+          btnMinus.textContent = '-';
+          btnMinus.onclick = () => removeItem(item.name, item.priceText);
+
+          const qtySpan = document.createElement('span');
+          qtySpan.id = `qty-${hashKey(item.name)}`;
+          qtySpan.textContent = '0';
+
+          const btnPlus = document.createElement('button');
+          btnPlus.type = 'button';
+          btnPlus.textContent = '+';
+          btnPlus.onclick = () => addItem(item.name, item.priceText);
+
+          controls.appendChild(btnMinus);
+          controls.appendChild(qtySpan);
+          controls.appendChild(btnPlus);
+
+          itemEl.appendChild(left);
+          itemEl.appendChild(controls);
+          catWrap.appendChild(itemEl);
+        });
+
+        categoriesRoot.appendChild(catWrap);
+      });
+    }
+
+    // cria uma chave curta do nome (para ids)
+    function hashKey(s) {
+      return s.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase().slice(0, 40);
+    }
+
+    function addItem(name, priceText) {
+      const key = name + ' | ' + priceText;
+      if (!cart[key]) cart[key] = { qty: 0, priceText, name };
+      cart[key].qty++;
+      updateCartUI();
+    }
+
+    function removeItem(name, priceText) {
+      const key = name + ' | ' + priceText;
+      if (!cart[key]) return;
+      cart[key].qty--;
+      if (cart[key].qty <= 0) delete cart[key];
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      cartList.innerHTML = "";
+      const keys = Object.keys(cart);
+      if (keys.length === 0) {
+        cartList.innerHTML = '<li class="muted">Nenhum item no carrinho</li>';
+      } else {
+        keys.forEach(k => {
+          const it = cart[k];
+          const li = document.createElement('li');
+          li.textContent = `${it.name} — ${it.priceText}  (x${it.qty})`;
+          cartList.appendChild(li);
+        });
+      }
+
+      // atualizar contadores visuais
+      menuData.forEach(cat => {
+        cat.items.forEach(item => {
+          const id = `qty-${hashKey(item.name)}`;
+          const span = document.getElementById(id);
+          const key = item.name + ' | ' + item.priceText;
+          span && (span.textContent = cart[key] ? cart[key].qty : 0);
+        });
+      });
+
+      // montar texto do pedido no preview
+      buildPedidoPreview();
+    }
+
+    function buildPedidoPreview() {
+      let lines = [];
+      lines.push("🍕 Novo Pedido!");
+      lines.push("");
+      const keys = Object.keys(cart);
+      if (keys.length === 0) {
+        lines.push("- Nenhum item selecionado -");
+      } else {
+        keys.forEach(k => {
+          const it = cart[k];
+          lines.push(`- ${it.name} — ${it.priceText} (x${it.qty})`);
+        });
+      }
+      lines.push("");
+      // campos do form serão colocados no envio final, aqui só preview do carrinho
+      pedidoPreview.value = lines.join("\n");
+    }
+
+    // Inicializar menu
+    renderMenu();
+    updateCartUI();
+
+    // ====== FORMULÁRIO / ENVIO WHATSAPP ======
+    const form = document.getElementById('form-pedido');
+
+    // transforma telefone para +55... se necessário
+    function toE164(raw) {
+      const digits = (raw || "").replace(/\D/g, "");
+      if (!digits) return "";
+      if (digits.startsWith("55")) return "+" + digits;
+      return "+55" + digits;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // checar carrinho
+      if (Object.keys(cart).length === 0) {
+        alert("Escolha pelo menos 1 item antes de confirmar o pedido.");
+        return;
+      }
+
+      // coletar dados do formulário
+      const nome = document.getElementById('nome').value.trim();
+      const telefone = toE164(document.getElementById('telefone').value.trim());
+      const observacao = document.getElementById('observacao').value.trim() || "—";
+      const cep = document.getElementById('cep').value.trim() || "—";
+      const rua = document.getElementById('rua').value.trim() || "—";
+      const numero = document.getElementById('numero').value.trim() || "—";
+      const bairro = document.getElementById('bairro').value.trim() || "—";
+      const referencia = document.getElementById('referencia').value.trim() || "—";
+      const pagamento = document.getElementById('pagamento').value || "—";
+      const troco = document.getElementById('troco').value.trim() || "—";
+
+      if (!nome || !telefone) {
+        alert("Preencha seu nome e telefone.");
+        return;
+      }
+
+      // montar linhas do pedido (itens)
+      const keys = Object.keys(cart);
+      const itemLines = keys.map(k => {
+        const it = cart[k];
+        return `- ${it.name} — ${it.priceText} (x${it.qty})`;
+      });
+
+      // montar mensagem final conforme formato que você pediu
+      const mensagemLines = [
+        "🍕 Novo Pedido!",
+        "",
+        `👤 NOME: ${nome}`,
+        `📞 telefone: ${telefone}`,
+        "",
+        ...itemLines,
+        "",
+        `🗒️ Observação: ${observacao}`,
+        `🗺 cep: ${cep}`,
+        `🏠 rua: ${rua}`,
+        `🏠 numero: ${numero}`,
+        `🏠 bairro: ${bairro}`,
+        `🏠 referencia: ${referencia}`,
+        `💳 Pagamento: ${pagamento}`,
+        `💸 TROCO: ${troco}`
+      ];
+
+      const mensagem = mensagemLines.join("\n");
+      // abrir WhatsApp (cliente precisa apertar enviar)
+      const waUrl = `https://wa.me/${PIZZARIA_PHONE.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`;
+      window.open(waUrl, "_blank");
+    });
+
+    // botão manual (abre whatsapp com o que tem no preview + campos)
+    document.getElementById('waFallback').addEventListener('click', () => {
+      // same behavior as submit without validation
+      const nome = document.getElementById('nome').value.trim() || "—";
+      const telefone = toE164(document.getElementById('telefone').value.trim()) || "—";
+      const observacao = document.getElementById('observacao').value.trim() || "—";
+      const cep = document.getElementById('cep').value.trim() || "—";
+      const rua = document.getElementById('rua').value.trim() || "—";
+      const numero = document.getElementById('numero').value.trim() || "—";
+      const bairro = document.getElementById('bairro').value.trim() || "—";
+      const referencia = document.getElementById('referencia').value.trim() || "—";
+      const pagamento = document.getElementById('pagamento').value || "—";
+      const troco = document.getElementById('troco').value.trim() || "—";
+
+      const keys = Object.keys(cart);
+      const itemLines = keys.length ? keys.map(k => {
+        const it = cart[k];
+        return `- ${it.name} — ${it.priceText} (x${it.qty})`;
+      }) : ["- Nenhum item selecionado -"];
+
+      const mensagemLines = [
+        "🍕 Novo Pedido!",
+        "",
+        `👤 NOME: ${nome}`,
+        `📞 telefone: ${telefone}`,
+        "",
+        ...itemLines,
+        "",
+        `🗒️ Observação: ${observacao}`,
+        `🗺 cep: ${cep}`,
+        `🏠 rua: ${rua}`,
+        `🏠 numero: ${numero}`,
+        `🏠 bairro: ${bairro}`,
+        `🏠 referencia: ${referencia}`,
+        `💳 Pagamento: ${pagamento}`,
+        `💸 TROCO: ${troco}`
+      ];
+
+      const mensagem = mensagemLines.join("\n");
+      const waUrl = `https://wa.me/${PIZZARIA_PHONE.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`;
+      window.open(waUrl, "_blank");
+
+
+   document.getElementById("cep").addEventListener("input", function() {
+    let cep = this.value.replace(/\D/g, '');
+    if (cep.length === 8) { // só busca quando tiver os 8 dígitos
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.erro) {
+                    document.getElementById("rua").value = data.logradouro;
+                    document.getElementById("bairro").value = data.bairro;
+                }
+            })
+            .catch(() => console.log("Erro ao buscar CEP"));
+    }
+  });
+
+    });
+  </script>
+</body>
+</html>
