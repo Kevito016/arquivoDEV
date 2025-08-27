@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cardápio Online</title>
+  <link rel="stylesheet" href="estilo.css" type="text/css" media="all" />
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #d32f2f;
+      color: white;
+      text-align: center;
+      padding: 15px;
+    }
+    h2 {
+      margin: 20px 10px 10px;
+      color: #333;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      padding: 10px 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .card h3 {
+      margin: 0 0 6px;
+      color: #d32f2f;
+      font-size: 16px;
+    }
+    .card p {
+      margin: 0;
+      font-size: 14px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .controls button {
+      background: #d32f2f;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #carrinho {
+      background: white;
+      padding: 15px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #formulario {
+      background: white;
+      padding: 15px;
+      margin: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #finalizar {
+      background: green;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🍕 PIZZARIAK3SABORES</h1>
+  </header>
+
+  <!-- Função para gerar cards -->
+  <script>
+    function gerarItem(nome, preco){
+      return `
+        <div class="card">
+          <h3>${nome}</h3>
+          <p>R$ ${preco.toFixed(2)}</p>
+          <div class="controls">
+            <button onclick="addItem('${nome}',${preco})">+</button>
+            <button onclick="removeItem('${nome}')">-</button>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+
+  <!-- Pizzas Salgadas -->
+  <h2>Pizzas Salgadas</h2>
+  <div class="container" id="pizzas-salgadas"></div>
+
+  <!-- Pizzas Doces -->
+  <h2>Pizzas Doces</h2>
+  <div class="container" id="pizzas-doces"></div>
+
+  <!-- Mini Pizzas Salgadas -->
+  <h2>Mini Pizzas Salgadas 20cm</h2>
+  <div class="container" id="mini-salgadas"></div>
+
+  <!-- Mini Pizzas Doces -->
+  <h2>Mini Pizzas Doces</h2>
+  <div class="container" id="mini-doces"></div>
+
+  <!-- Bordas -->
+  <h2>Bordas</h2>
+  <div class="container" id="bordas"></div>
+
+  <!-- Adicionais -->
+  <h2>Adicionais</h2>
+  <div class="container" id="adicionais"></div>
+
+  <!-- Pastéis -->
+  <h2>Pastéis</h2>
+  <div class="container" id="pasteis"></div>
+
+  <!-- Refrigerantes -->
+  <h2>Refrigerantes</h2>
+  <div class="container" id="refrigerantes"></div>
+
+  <!-- Carrinho -->
+  <div id="carrinho">
+    <h2>🛒 Carrinho</h2>
+    <ul id="lista"></ul>
+    <p><strong>Total: R$ <span id="total">0.00</span></strong></p>
+  </div>
+  
+      <div id="taxa">
+        <h1>Taxa de Entrega</h1>
+        <p>Santa Maria:6,00</p>
+        <p>Messejana:4,00</p>
+         <h2><strong>Chave Pix:</strong></h2>
+         <p>josefreires1033@gmail.com</p>
+         <p>Enviar o Comprovante no Whatsapp</p>
+    </div>
+
+  <!-- Formulário -->
+  <div id="formulario">
+    <h2>Dados do Pedido</h2>
+    <input type="text" id="nome" placeholder="Nome" required>
+    <input type="tel" id="telefone" placeholder="Telefone" required>
+    <input type="text" id="cep" placeholder="CEP" onblur="buscarCEP()" required>
+    <input type="text" id="rua" placeholder="Rua" required>
+    <input type="text" id="numero" placeholder="Número" required>
+    <input type="text" id="bairro" placeholder="Bairro" required>
+    <input type="text" id="referencia" placeholder="Referência">
+    <select id="pagamento">
+      <option value="Dinheiro">Dinheiro</option>
+      <option value="Pix">Pix</option>
+      <option value="Cartão">Cartão</option>
+    </select>
+    <input type="text" id="troco" placeholder="Troco para quanto? (se dinheiro)">
+    <button id="finalizar" onclick="finalizarPedido()">Finalizar Pedido</button>
+  </div>
+
+  <script>
+    let carrinho = {};
+    let total = 0;
+
+    function addItem(item, preco){
+      if(carrinho[item]){
+        carrinho[item].qtd++;
+      } else {
+        carrinho[item] = {preco: preco, qtd: 1};
+      }
+      total += preco;
+      atualizarCarrinho();
+    }
+
+    function removeItem(item){
+      if(carrinho[item]){
+        total -= carrinho[item].preco;
+        carrinho[item].qtd--;
+        if(carrinho[item].qtd <= 0) delete carrinho[item];
+        atualizarCarrinho();
+      }
+    }
+
+    function atualizarCarrinho(){
+      let lista = document.getElementById('lista');
+      lista.innerHTML = '';
+      for(let i in carrinho){
+        let li = document.createElement('li');
+        li.textContent = `${carrinho[i].qtd}x ${i} - R$ ${(carrinho[i].qtd * carrinho[i].preco).toFixed(2)}`;
+        lista.appendChild(li);
+      }
+      document.getElementById('total').textContent = total.toFixed(2);
+    }
+
+    function buscarCEP(){
+      let cep = document.getElementById('cep').value.replace(/\D/g,'');
+      if(cep.length === 8){
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+          .then(res => res.json())
+          .then(data => {
+            if(!data.erro){
+              document.getElementById('rua').value = data.logradouro;
+              document.getElementById('bairro').value = data.bairro;
+            }
+          });
+      }
+    }
+
+    function finalizarPedido(){
+      let nome = document.getElementById('nome').value;
+      let tel = document.getElementById('telefone').value;
+      let cep = document.getElementById('cep').value;
+      let rua = document.getElementById('rua').value;
+      let numero = document.getElementById('numero').value;
+      let bairro = document.getElementById('bairro').value;
+      let ref = document.getElementById('referencia').value;
+      let pag = document.getElementById('pagamento').value;
+      let troco = document.getElementById('troco').value;
+
+      let pedido = `*Novo Pedido*%0A%0A🛒 *Itens:*%0A`;
+      for(let i in carrinho){
+        pedido += `${carrinho[i].qtd}x ${i} - R$ ${(carrinho[i].qtd * carrinho[i].preco).toFixed(2)}%0A`;
+      }
+      pedido += `%0A💰 *Total:* R$ ${total.toFixed(2)}%0A%0A`;
+      pedido += `👤 Nome: ${nome}%0A📞 Tel: ${tel}%0A📍 Endereço: Rua ${rua}, ${numero}, ${bairro}, CEP: ${cep}%0A🔎 Ref: ${ref}%0A💳 Pagamento: ${pag}%0A`;
+      if(pag === "Dinheiro" && troco) pedido += `Troco para: ${troco}%0A`;
+
+      window.open(`https://wa.me/5585992321310?text=${pedido}`,'_blank');
+    }
+
+    // ------------------------
+    // CARDÁPIO COMPLETO
+    // ------------------------
+    const pizzasSalgadas = [
+      ["Pizza de mussarela",34],["Pizza de lombo",34],["Pizza de Frango",34],["Pizza Mista",34],["Pizza Portuguesa",34],
+      ["Pizza de Queijo Coalho",34],["Pizza Bolonhesa",34],["Pizza Dois Queijos",38],["Pizza Três Queijos",38],
+      ["Pizza Veneza",46],["Pizza La México",49.99],["Pizza Frango Crispy",49.99],["Pizza Pepperoni Cheese",48],
+      ["Pizza Carne do Sol Premium",48],["Pizza Salmão cheese",56],["Pizza Delicinha",46],["Pizza surpresinha",55],
+      ["Pizza Camarão cheese",55],["Pizza Fritas Cheddar",55],["Pizza Frango Catupiry",45],["Pizza Quatro Queijos",45],
+      ["Pizza Sertaneja",45],["Pizza Buscapé",55],["Pizza Canadense Hot",45],["Pizza Peito de Peru",45],
+      ["Pizza Pepperoni",45],["Pizza Faroeste",48],["Pizza Costelinha",55]
+    ];
+
+    const pizzasDoces = [
+      ["Pizza de Chocolate",39.99]
+    ];
+
+    const miniSalgadas = [
+      ["Minipizza de mussarela",15],["Minipizza de lombo",15],["Minipizza de Frango",15],["Minipizza Mista",15],
+      ["Pizza Portuguesa",15],["Minipizza Queijo Coalho",15],["Minipizza Bolonhesa",15],["Minipizza Dois Queijos",15],
+      ["Minipizza Três Queijos",15],["Minipizza Veneza",22],["Minipizza La México",24],["Minipizza Frango Crispy",24],
+      ["Minipizza Pepperoni Cheese",22],["Minipizza Carne do Sol Premium",23],["Minipizza Salmão cheese",23],
+      ["Minipizza Delicinha",22],["Minipizza surpresinha",55],["Minipizza Camarão cheese",25],["Minipizza Fritas Cheddar",25],
+      ["Minipizza Frango Catupiry",20],["Minipizza Quatro Queijos",20],["Minipizza Sertaneja",20],["Minipizza Buscapé",25],
+      ["Minipizza Canadense Hot",20],["Minipizza Peito de Peru",20],["Minipizza Pepperoni",20],["Minipizza Faroeste",20],
+      ["Minipizza Costelinha",25]
+    ];
+
+    const miniDoces = [
+      ["Minipizza de Chocolate",18],["Minipizza prestígio",20],["Minipizza Chocolate C/Morango",20],
+      ["Minipizza Ninho C/Nutella",20],["Minipizza KitKat",20],["Minipizza Bananinha",23],
+      ["Minipizza Romeu e Julieta",23],["Minipizza Baton Garoto",23],["Minipizza Casadinha",25],["Minipizza M'Ms",25]
+    ];
+
+    const bordas = [
+      ["Borda de CHOCOLATE",5],["Borda de CHEDDAR",5],["Borda de REQUEIJÃO",5],["Borda de BRIGADEIRO",6],
+      ["Borda de CATUPIRY",6],["Borda de CREAM CHEESE",6],["Borda de NUTELLA",6],["Borda de DOCE DE LEITE",6]
+    ];
+
+    const adicionais = [
+      ["MILHO VERDE",2],["MANJERICÃO",2],["TOMATE",3],["PIMENTA BIQUINHO",3],["CEBOLA",3],
+      ["PALMITO",4],["CHEDDAR",5],["REQUEIJÃO",6],["ONION RINGS",6],["CREAM CHEESE",7],
+      ["BACON",6],["CEBOLA CRISPY",4]
+    ];
+
+    const pasteis = [
+      ["PASTEL DE QUEIJO",8],["PASTEL DE CARNE",8],["PASTEL DE MISTO",8],["PASTEL DE FRANGO",8],
+      ["PASTEL DE PIZZA",8],["PASTEL DE CALABRESA",8],["PASTEL DE MISTÃO",12],["PASTEL DE SERTANEJO",12],
+      ["PASTEL DE TRÊS QUEIJOS",12],["PASTEL DE FELICIDADE",12],["PASTEL DE FRANGO C/CATUPIRY",12],
+      ["PASTEL A MODA",12],["PASTEL A MODA DA GALERA",15],["PASTEL DE CHOCOLATE",10],["PASTEL DE DOCE DE LEITE",10]
+    ];
+
+    const refrigerantes = [
+      ["PEPSI 1L",10],["COCA-COLA ZERO 1L",10],["COCA-COLA 1L PET",10],["SÃO GERALDO 1L",10],["GUARANÁ 1L",10],
+      ["REFRI-LATA FANTA-UVA 350ML",5],["REFRI-LATA FANTA-LARANJA 350ML",5],["REFRI-LATA SPRITE 350ML",5],
+      ["REFRI-LATA COCA-COLA ZERO 350ML",5],["REFRI-LATA COCA-COLA 350ML",5],["REFRI-LATA SÃO GERALDO 350ML",5]
+    ];
+
+    function renderizar(lista, id){
+      let div = document.getElementById(id);
+      lista.forEach(([nome, preco])=>{
+        div.innerHTML += gerarItem(nome, preco);
+      });
+    }
+
+    renderizar(pizzasSalgadas,"pizzas-salgadas");
+    renderizar(pizzasDoces,"pizzas-doces");
+    renderizar(miniSalgadas,"mini-salgadas");
+    renderizar(miniDoces,"mini-doces");
+    renderizar(bordas,"bordas");
+    renderizar(adicionais,"adicionais");
+    renderizar(pasteis,"pasteis");
+    renderizar(refrigerantes,"refrigerantes");
+  </script>
+</body>
+</html>

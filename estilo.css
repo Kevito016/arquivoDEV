@@ -1,0 +1,28 @@
+div.container>h2#logoname{
+    text-align: center;
+    font-size: 30px;
+    margin: 10px;
+}
+
+div#taxa{
+    
+    width: 310px;
+    height: 230px;
+    background-color: white;
+    margin: 50px auto;
+    border-radius: 10px;
+}
+
+div#taxa>h1{
+    text-align: center;
+    margin: ;:10px;
+}
+
+div#taxa>p{
+    text-align: center;
+    
+}
+
+div#taxa>h2{
+    text-align: center;
+}
